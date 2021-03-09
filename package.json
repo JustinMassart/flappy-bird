@@ -1,0 +1,25 @@
+{
+  "name": "flappy-bird",
+  "version": "1.0.0",
+  "description": "A reproduction of the well know Flappy Bird game on mobile",
+  "main": "app.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://JustinMassart@github.com/JustinMassart/flappy-bird.git"
+  },
+  "author": "Justin Massart",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/JustinMassart/flappy-bird/issues"
+  },
+  "homepage": "https://github.com/JustinMassart/flappy-bird#readme",
+  "devDependencies": {
+    "laravel-mix": "^6.0.13",
+    "resolve-url-loader": "^3.1.2",
+    "sass": "^1.32.8",
+    "sass-loader": "^10.1.1"
+  }
+}
