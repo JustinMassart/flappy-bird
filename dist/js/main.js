@@ -63,7 +63,7 @@ var birdie = {
     sx: 118,
     sy: 982
   }],
-  maxAnimationStep: 2,
+  maxAnimationStep: 0,
   animationStep: 0,
   counterInterval: 0,
   maxInterval: 5,
@@ -73,13 +73,24 @@ var birdie = {
   y: 0,
   fallSpeed: 0,
   maxFallSpeed: 7,
-  update: function update() {
-    this.render();
-  },
   init: function init(game) {
     this.game = game;
-    this.y = (game.canvas.height - _ground__WEBPACK_IMPORTED_MODULE_0__.default.frame.sh) / 2;
     this.x = this.width / 2 + 3;
+    this.y = (game.canvas.height - _ground__WEBPACK_IMPORTED_MODULE_0__.default.frame.sh) / 2;
+    this.maxAnimationStep = this.frames.length - 1;
+  },
+  update: function update() {
+    if (this.game.hasStarted) {
+      if (this.fallSpeed < this.maxFallSpeed) {
+        this.fallSpeed += this.game.gravity;
+      }
+
+      this.y += this.fallSpeed;
+      this.checkCollisionWithGround();
+      this.checkCollisionWithTubes();
+    }
+
+    this.render();
   },
   render: function render() {
     this.counterInterval++;
@@ -91,7 +102,7 @@ var birdie = {
 
     this.game.context.save();
     this.game.context.translate(this.x, this.y);
-    this.game.context.rotate(0);
+    this.game.context.rotate(this.fallSpeed / this.maxFallSpeed);
     this.game.renderSpriteFrame({
       sx: this.frames[this.animationStep].sx,
       sy: this.frames[this.animationStep].sy,
@@ -103,9 +114,58 @@ var birdie = {
       dh: this.height
     });
     this.game.context.restore();
+  },
+  goUp: function goUp() {
+    this.fallSpeed = -this.maxFallSpeed;
+  },
+  checkCollisionWithGround: function checkCollisionWithGround() {
+    if (this.y + this.height / 2 > _ground__WEBPACK_IMPORTED_MODULE_0__.default.frame.dy) {
+      this.y = _ground__WEBPACK_IMPORTED_MODULE_0__.default.frame.dy - this.height / 2;
+      this.goUp();
+    }
+  },
+  checkCollisionWithTubes: function checkCollisionWithTubes() {
+    var _this = this;
+
+    this.game.tubesPairs.forEach(function (tubePair) {
+      if (_this.x + _this.width / 2 > tubePair.x && _this.x - _this.width / 2 < tubePair.x + tubePair.width) {
+        if (_this.y - _this.height / 2 < tubePair.yTop + tubePair.height || _this.y + _this.height / 2 > tubePair.yBottom) {
+          _this.game.cancelAnimation();
+        }
+      }
+    });
   }
 };
 /* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (birdie);
+
+/***/ }),
+
+/***/ "./src/js/gameController.js":
+/*!**********************************!*\
+  !*** ./src/js/gameController.js ***!
+  \**********************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (__WEBPACK_DEFAULT_EXPORT__)
+/* harmony export */ });
+/* harmony import */ var _birdie__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./birdie */ "./src/js/birdie.js");
+
+var gameController = {
+  init: function init(game) {
+    window.addEventListener('keydown', function (event) {
+      if (event.key === 'j') {
+        if (!game.hasStarted) {
+          game.hasStarted = true;
+        }
+
+        _birdie__WEBPACK_IMPORTED_MODULE_0__.default.goUp();
+      }
+    });
+  }
+};
+/* harmony default export */ const __WEBPACK_DEFAULT_EXPORT__ = (gameController);
 
 /***/ }),
 
@@ -158,9 +218,13 @@ var ground = {
 /***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
 
 __webpack_require__.r(__webpack_exports__);
-/* harmony import */ var _background__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./background */ "./src/js/background.js");
-/* harmony import */ var _ground__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./ground */ "./src/js/ground.js");
-/* harmony import */ var _birdie__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./birdie */ "./src/js/birdie.js");
+/* harmony import */ var _gameController__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./gameController */ "./src/js/gameController.js");
+/* harmony import */ var _background__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./background */ "./src/js/background.js");
+/* harmony import */ var _tubesPairs__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./tubesPairs */ "./src/js/tubesPairs.js");
+/* harmony import */ var _ground__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./ground */ "./src/js/ground.js");
+/* harmony import */ var _birdie__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./birdie */ "./src/js/birdie.js");
+
+
 
 
 
@@ -169,15 +233,23 @@ var game = {
   context: null,
   spriteSheetSrc: './resources/sprite.png',
   sprite: new Image(),
+  gravity: 0.9,
+  hasStarted: false,
+  tubesPairs: [],
+  frameCounter: 0,
+  frameInterval: 80,
+  maxTubesPairs: 3,
+  requestId: 0,
   init: function init() {
     var _this = this;
 
     this.context = this.canvas.getContext('2d');
     this.sprite.src = this.spriteSheetSrc;
     this.sprite.addEventListener('load', function () {
-      _background__WEBPACK_IMPORTED_MODULE_0__.default.init(_this);
-      _ground__WEBPACK_IMPORTED_MODULE_1__.default.init(_this);
-      _birdie__WEBPACK_IMPORTED_MODULE_2__.default.init(_this);
+      _gameController__WEBPACK_IMPORTED_MODULE_0__.default.init(_this);
+      _background__WEBPACK_IMPORTED_MODULE_1__.default.init(_this);
+      _ground__WEBPACK_IMPORTED_MODULE_3__.default.init(_this);
+      _birdie__WEBPACK_IMPORTED_MODULE_4__.default.init(_this);
 
       _this.animate();
     });
@@ -185,19 +257,118 @@ var game = {
   animate: function animate() {
     var _this2 = this;
 
-    window.requestAnimationFrame(function () {
+    this.requestId = window.requestAnimationFrame(function () {
       _this2.animate();
     });
     this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
-    _background__WEBPACK_IMPORTED_MODULE_0__.default.update();
-    _ground__WEBPACK_IMPORTED_MODULE_1__.default.update();
-    _birdie__WEBPACK_IMPORTED_MODULE_2__.default.update();
+    _background__WEBPACK_IMPORTED_MODULE_1__.default.update();
+
+    if (this.hasStarted) {
+      if (this.frameCounter++ > this.frameInterval) {
+        if (this.tubesPairs.length >= this.maxTubesPairs) {
+          this.tubesPairs.splice(0, 1);
+        }
+
+        this.tubesPairs.push(new _tubesPairs__WEBPACK_IMPORTED_MODULE_2__.default(this));
+        this.frameCounter = 0;
+      }
+
+      this.tubesPairs.forEach(function (tubePair) {
+        tubePair.update();
+      });
+    }
+
+    _ground__WEBPACK_IMPORTED_MODULE_3__.default.update();
+    _birdie__WEBPACK_IMPORTED_MODULE_4__.default.update();
   },
   renderSpriteFrame: function renderSpriteFrame(coordinates) {
     this.context.drawImage(this.sprite, coordinates.sx, coordinates.sy, coordinates.sw, coordinates.sh, coordinates.dx, coordinates.dy, coordinates.dw, coordinates.dh);
+  },
+  cancelAnimation: function cancelAnimation() {
+    window.cancelAnimationFrame(this.requestId);
   }
 };
 game.init();
+
+/***/ }),
+
+/***/ "./src/js/tubesPairs.js":
+/*!******************************!*\
+  !*** ./src/js/tubesPairs.js ***!
+  \******************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   "default": () => (/* binding */ TubesPairs)
+/* harmony export */ });
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+var TubesPairs = /*#__PURE__*/function () {
+  function TubesPairs(game) {
+    _classCallCheck(this, TubesPairs);
+
+    this.game = game;
+    this.spaceBetweenTubes = 80;
+    this.x = game.canvas.width;
+    this.speed = 3;
+    this.width = 52;
+    this.height = 317;
+    this.yTop = -Math.floor(Math.random() * 280) - 25;
+    this.yBottom = this.yTop + this.height + this.spaceBetweenTubes;
+    this.tubeTopFrame = {
+      sx: 113,
+      sy: 647,
+      sw: this.width,
+      sh: this.height,
+      dx: 0,
+      dy: 0,
+      dw: this.width,
+      dh: this.height
+    };
+    this.tubeBottomFrame = {
+      sx: 168,
+      sy: 647,
+      sw: this.width,
+      sh: this.height,
+      dx: 0,
+      dy: 0,
+      dw: this.width,
+      dh: this.height
+    };
+  }
+
+  _createClass(TubesPairs, [{
+    key: "update",
+    value: function update() {
+      this.x -= this.speed;
+      this.render();
+    }
+  }, {
+    key: "render",
+    value: function render() {
+      // Tube du haut
+      this.game.context.save();
+      this.game.context.translate(this.x, this.yTop);
+      this.game.renderSpriteFrame(this.tubeTopFrame);
+      this.game.context.restore(); // Tube du bas
+
+      this.game.context.save();
+      this.game.context.translate(this.x, this.yBottom);
+      this.game.renderSpriteFrame(this.tubeBottomFrame);
+      this.game.context.restore();
+    }
+  }]);
+
+  return TubesPairs;
+}();
+
+
+;
 
 /***/ }),
 
