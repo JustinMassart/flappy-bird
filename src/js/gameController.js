@@ -4,7 +4,7 @@ const gameController = {
 
     init(game) {
         window.addEventListener('keydown', (event) => {
-            if (event.key === 'j') {
+            if (event.key === 'j' ) {
                 if (!game.hasStarted) {
                     game.hasStarted = true;
                 }

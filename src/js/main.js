@@ -1,6 +1,7 @@
 import gameController from './gameController';
 import background from './background';
 import TubesPairs from "./tubesPairs";
+import asset_Play from './assets';
 import ground from './ground';
 import birdie from './birdie';
 
@@ -22,6 +23,7 @@ const game = {
         this.sprite.addEventListener('load', () => {
             gameController.init(this);
             background.init(this);
+            asset_Play.init(this);
             ground.init(this);
             birdie.init(this);
             this.animate();
@@ -44,6 +46,8 @@ const game = {
             this.tubesPairs.forEach(tubePair => {
                 tubePair.update();
             })
+        } else {
+            asset_Play.update();
         }
         ground.update();
         birdie.update();
